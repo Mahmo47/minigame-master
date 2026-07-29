@@ -1,0 +1,59 @@
+[gd_scene load_steps=2 format=3 uid="uid://b45bjakmdplkg"]
+
+[ext_resource type="Script" uid="uid://d24igfd6vcavh" path="res://Scenes/03_confirm_game.gd" id="1_e564d"]
+
+[node name="confirm_game" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_e564d")
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -251.5
+offset_top = -201.0
+offset_right = 251.5
+offset_bottom = 201.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer"]
+layout_mode = 2
+
+[node name="Game_name" type="Label" parent="PanelContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 6
+text = "Game_name"
+horizontal_alignment = 1
+
+[node name="Start_Game" type="Button" parent="PanelContainer/VBoxContainer"]
+process_mode = 3
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 6
+text = "Play Game"
+
+[node name="High Score" type="Label" parent="PanelContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 6
+text = "High Score: "
+horizontal_alignment = 1
+
+[node name="Score" type="Label" parent="PanelContainer/VBoxContainer/High Score"]
+layout_mode = 0
+offset_left = 107.5
+offset_right = 198.5
+offset_bottom = 23.0
+size_flags_vertical = 6
+text = "0"
+horizontal_alignment = 1
