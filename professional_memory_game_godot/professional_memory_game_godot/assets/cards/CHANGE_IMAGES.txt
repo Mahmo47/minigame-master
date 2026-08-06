@@ -1,0 +1,9 @@
+CUSTOM CARD IMAGES
+
+The game copies the included professional images to:
+user://memory_cards_professional
+
+Use the Open Card Folder button to open this folder.
+You can replace the files with your own PNG, JPG, or JPEG images.
+Use at least 15 different images for Hard mode.
+Then click Reload Images in the game.
