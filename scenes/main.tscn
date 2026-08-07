@@ -6,6 +6,12 @@
 [ext_resource type="PackedScene" uid="uid://dilc421qn8oq6" path="res://scenes/bird.tscn" id="3_jyhfs"]
 [ext_resource type="PackedScene" uid="uid://xhkvqnnysyuf" path="res://scenes/ground.tscn" id="4_jyhfs"]
 [ext_resource type="PackedScene" uid="uid://cncr7rboyy6nw" path="res://scenes/game_over.tscn" id="6_tefeu"]
+[ext_resource type="Texture2D" uid="uid://c7rq6kkf5lf12" path="res://assets/message.png" id="7_o6xl0"]
+[ext_resource type="AudioStream" uid="uid://ujnp2ypk5njd" path="res://assets/audio/die.ogg" id="8_85g3d"]
+[ext_resource type="AudioStream" uid="uid://cqxne33q5msrf" path="res://assets/audio/hit.ogg" id="9_choun"]
+[ext_resource type="AudioStream" uid="uid://bwagmo8vwrcj6" path="res://assets/audio/point.ogg" id="10_choun"]
+[ext_resource type="AudioStream" uid="uid://dbp7cqn7f8cbf" path="res://assets/audio/swoosh.ogg" id="11_eb6dy"]
+[ext_resource type="AudioStream" uid="uid://xq15na8mxn14" path="res://assets/audio/wing.ogg" id="12_trceg"]
 
 [node name="Main" type="Node" unique_id=1876576234]
 script = ExtResource("1_sugp2")
@@ -24,20 +30,35 @@ z_index = 1
 [node name="PipeTimer" type="Timer" parent="." unique_id=441738348]
 wait_time = 1.2
 
-[node name="Score" type="Label" parent="." unique_id=1093474032]
-z_index = 1
+[node name="GameOver" parent="." unique_id=1314732791 instance=ExtResource("6_tefeu")]
+
+[node name="GetReady" type="Sprite2D" parent="." unique_id=267329430]
+texture = ExtResource("7_o6xl0")
+offset = Vector2(425, 450)
+
+[node name="DieSound" type="AudioStreamPlayer2D" parent="." unique_id=1861877674]
+stream = ExtResource("8_85g3d")
+
+[node name="HitSound" type="AudioStreamPlayer2D" parent="." unique_id=1398311650]
+stream = ExtResource("9_choun")
+
+[node name="PointSound" type="AudioStreamPlayer2D" parent="." unique_id=1687503108]
+stream = ExtResource("10_choun")
+
+[node name="SwooshSound" type="AudioStreamPlayer2D" parent="." unique_id=501916450]
+stream = ExtResource("11_eb6dy")
+
+[node name="WingSound" type="AudioStreamPlayer2D" parent="." unique_id=1080440495]
+stream = ExtResource("12_trceg")
+
+[node name="ScoreContainer" type="HBoxContainer" parent="." unique_id=1963199621]
+z_index = 2
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -36.5
-offset_right = 36.5
-offset_bottom = 23.0
 grow_horizontal = 2
-theme_override_font_sizes/font_size = 40
-text = "SCORE : 0"
-
-[node name="GameOver" parent="." unique_id=1314732791 instance=ExtResource("6_tefeu")]
 
 [connection signal="hit" from="Ground" to="." method="_on_ground_hit"]
 [connection signal="timeout" from="PipeTimer" to="." method="_on_pipe_timer_timeout"]
+[connection signal="back" from="GameOver" to="." method="_on_game_over_back"]
 [connection signal="restart" from="GameOver" to="." method="_on_game_over_restart"]

@@ -1,7 +1,8 @@
 [gd_scene format=3 uid="uid://cncr7rboyy6nw"]
 
 [ext_resource type="Script" uid="uid://gfj3658iltxn" path="res://scenes/game_over.gd" id="1_wqhvx"]
-[ext_resource type="Texture2D" uid="uid://chm3uxgilymo4" path="res://assets/restart.png" id="2_tbwuq"]
+[ext_resource type="Texture2D" uid="uid://y1w4fol0f5se" path="res://assets/restart.jpg" id="2_tbwuq"]
+[ext_resource type="Texture2D" uid="uid://ctc7bwa2xqqdm" path="res://assets/back_to_menu.jpg" id="3_tbwuq"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_0nqlu"]
 texture = ExtResource("2_tbwuq")
@@ -11,6 +12,15 @@ texture = ExtResource("2_tbwuq")
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_wqhvx"]
 texture = ExtResource("2_tbwuq")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_xrivr"]
+texture = ExtResource("3_tbwuq")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_13qdw"]
+texture = ExtResource("3_tbwuq")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_b1lj4"]
+texture = ExtResource("3_tbwuq")
 
 [node name="GameOver" type="CanvasLayer" unique_id=1314732791]
 script = ExtResource("1_wqhvx")
@@ -24,4 +34,14 @@ theme_override_styles/normal = SubResource("StyleBoxTexture_0nqlu")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_xeevv")
 theme_override_styles/hover = SubResource("StyleBoxTexture_wqhvx")
 
+[node name="BackToMain" type="Button" parent="." unique_id=767233486]
+offset_left = 342.0
+offset_top = 450.0
+offset_right = 502.0
+offset_bottom = 513.0
+theme_override_styles/normal = SubResource("StyleBoxTexture_xrivr")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_13qdw")
+theme_override_styles/hover = SubResource("StyleBoxTexture_b1lj4")
+
 [connection signal="pressed" from="Restart" to="." method="_on_restart_pressed"]
+[connection signal="pressed" from="BackToMain" to="." method="_on_back_to_main_pressed"]

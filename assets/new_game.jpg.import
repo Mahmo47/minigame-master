@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://chm3uxgilymo4"
-path="res://.godot/imported/restart.png-e3341f5ab3201ffaa3fc76965a1ab56e.ctex"
+uid="uid://ccgfputg7mtty"
+path="res://.godot/imported/new_game.jpg-8f852b1b1083a95e09e38dd4b6f10d62.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/restart.png"
-dest_files=["res://.godot/imported/restart.png-e3341f5ab3201ffaa3fc76965a1ab56e.ctex"]
+source_file="res://assets/new_game.jpg"
+dest_files=["res://.godot/imported/new_game.jpg-8f852b1b1083a95e09e38dd4b6f10d62.ctex"]
 
 [params]
 

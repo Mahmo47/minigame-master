@@ -2,6 +2,19 @@ extends Node
 
 @export var pipe_scene : PackedScene
 
+var digit_textures = [
+	preload("res://assets/numbers/0.png"),
+	preload("res://assets/numbers/1.png"),
+	preload("res://assets/numbers/2.png"),
+	preload("res://assets/numbers/3.png"),
+	preload("res://assets/numbers/4.png"),
+	preload("res://assets/numbers/5.png"),
+	preload("res://assets/numbers/6.png"),
+	preload("res://assets/numbers/7.png"),
+	preload("res://assets/numbers/8.png"),
+	preload("res://assets/numbers/9.png")
+]
+
 var game_running : bool
 var game_over : bool
 var scroll
@@ -23,8 +36,9 @@ func new_game():
 	game_over = false
 	score = 0
 	scroll = 0
-	$Score.text = "SCORE: " + str(score)
+	update_score_display()
 	$GameOver.hide()
+	$GetReady.show()
 	get_tree().call_group("pipes", "queue_free")
 	pipes.clear()
 	generate_pipes()
@@ -39,6 +53,7 @@ func _input(event):
 				else:
 					if $Bird.flying:
 						$Bird.flap()
+						$WingSound.play()
 						check_top()
 					
 
@@ -46,7 +61,9 @@ func start_game():
 	game_running = true
 	$Bird.flying = true
 	$Bird.flap()
+	$WingSound.play()
 	$PipeTimer.start()
+	$GetReady.hide()
 
 func _process(delta):
 	if game_running:
@@ -57,6 +74,19 @@ func _process(delta):
 		for pipe in pipes:
 			pipe.position.x -= SCROLL_SPEED
 
+func update_score_display():
+	for child in $ScoreContainer.get_children():
+		child.queue_free()
+
+	var score_string = str(score)
+
+	for character in score_string:
+		var digit = TextureRect.new()
+		digit.texture = digit_textures[int(character)]
+		digit.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		digit.custom_minimum_size = Vector2(32, 48)
+		digit.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		$ScoreContainer.add_child(digit)
 
 func _on_pipe_timer_timeout() -> void:
 	generate_pipes()
@@ -72,6 +102,7 @@ func generate_pipes():
 
 func check_top():
 	if $Bird.position.y < 0:
+		$DieSound.play()
 		$Bird.falling = true
 		stop_game()
 
@@ -83,17 +114,26 @@ func stop_game():
 	game_over = true
 
 func bird_hit():
+	$HitSound.play()
+	$DieSound.play()
 	$Bird.falling = true
 	stop_game()
 
 func scored():
 	score += 1
-	$Score.text = "SCORE: " + str(score)
+	$PointSound.play()
+	update_score_display()
 
 func _on_ground_hit() -> void:
+	$HitSound.play()
 	$Bird.falling = false
 	stop_game()
 
 
 func _on_game_over_restart() -> void:
+	AudioManager.play_swoosh()
 	new_game()
+
+func _on_game_over_back() -> void:
+	AudioManager.play_swoosh()
+	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
