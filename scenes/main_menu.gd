@@ -8,4 +8,4 @@ func _on_new_game_pressed():
 
 func _on_leaderboard_pressed():
 	AudioManager.play_swoosh()
-	pass
+	get_tree().change_scene_to_file("res://scenes/leaderboard.tscn")

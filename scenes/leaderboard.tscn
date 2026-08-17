@@ -1,0 +1,119 @@
+[gd_scene format=3 uid="uid://dmowub4j8tjmu"]
+
+[ext_resource type="Script" uid="uid://d30jiik556u84" path="res://scenes/leaderboard.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://de7amgi0rg06g" path="res://assets/main_menu_bg.png" id="2_background"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxPanel"]
+bg_color = Color(0.08, 0.12, 0.18, 0.92)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.184314, 0.364706, 0.623529, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxButton"]
+bg_color = Color(0.184314, 0.364706, 0.623529, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[node name="Leaderboard" type="Control" unique_id=875778055]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="Sprite2D" parent="." unique_id=1495094869]
+texture = ExtResource("2_background")
+offset = Vector2(432, 465)
+
+[node name="Title" type="Label" parent="." unique_id=1023977010]
+layout_mode = 0
+offset_left = 212.0
+offset_top = 110.0
+offset_right = 652.0
+offset_bottom = 175.0
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8, 1)
+theme_override_font_sizes/font_size = 42
+text = "LEADERBOARD"
+horizontal_alignment = 1
+
+[node name="LeaderboardPanel" type="PanelContainer" parent="." unique_id=1440645849]
+layout_mode = 0
+offset_left = 112.0
+offset_top = 210.0
+offset_right = 752.0
+offset_bottom = 640.0
+theme_override_styles/panel = SubResource("StyleBoxPanel")
+
+[node name="Margin" type="MarginContainer" parent="LeaderboardPanel" unique_id=523736847]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="Content" type="VBoxContainer" parent="LeaderboardPanel/Margin" unique_id=1543529792]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="LeaderboardPanel/Margin/Content" unique_id=1622377543]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Rank" type="Label" parent="LeaderboardPanel/Margin/Content/Header" unique_id=53349766]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.82, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "RANK"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Player" type="Label" parent="LeaderboardPanel/Margin/Content/Header" unique_id=1101850679]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.82, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "PLAYER"
+vertical_alignment = 1
+
+[node name="Score" type="Label" parent="LeaderboardPanel/Margin/Content/Header" unique_id=532459380]
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.82, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "HIGH SCORE"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="Separator" type="HSeparator" parent="LeaderboardPanel/Margin/Content" unique_id=1780172339]
+layout_mode = 2
+
+[node name="Rows" type="VBoxContainer" parent="LeaderboardPanel/Margin/Content" unique_id=557527700]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Back" type="Button" parent="." unique_id=135476566]
+layout_mode = 0
+offset_left = 342.0
+offset_top = 700.0
+offset_right = 502.0
+offset_bottom = 763.0
+theme_override_colors/font_color = Color(1, 0.956863, 0.8, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxButton")
+theme_override_styles/pressed = SubResource("StyleBoxButton")
+theme_override_styles/hover = SubResource("StyleBoxButton")
+text = "Back"
+
+[connection signal="pressed" from="Back" to="." method="_on_back_pressed"]

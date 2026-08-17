@@ -18,11 +18,18 @@ var digit_textures = [
 var game_running : bool
 var game_over : bool
 var scroll
-var score
-const SCROLL_SPEED : int = 2
+var score: int
+var scroll_speed: float
+var difficulty_level: int
 var screen_size : Vector2i
 var ground_height : int
 var pipes : Array
+const BASE_SCROLL_SPEED: float = 2.0
+const SPEED_INCREASE_PER_LEVEL: float = 0.3
+const BASE_PIPE_INTERVAL: float = 1.2
+const PIPE_SPACING_INCREASE_PER_LEVEL: float = 0.02
+const DIFFICULTY_SCORE_STEP: int = 10
+const MAX_DIFFICULTY_LEVEL: int = 10
 const PIPE_DELAY : int = 100
 const PIPE_RANGE : int = 200
 
@@ -36,6 +43,8 @@ func new_game():
 	game_over = false
 	score = 0
 	scroll = 0
+	difficulty_level = 0
+	_apply_difficulty()
 	update_score_display()
 	$GameOver.hide()
 	$GetReady.show()
@@ -67,12 +76,12 @@ func start_game():
 
 func _process(delta):
 	if game_running:
-		scroll += SCROLL_SPEED
+		scroll += scroll_speed
 		if scroll >= screen_size.x:
 			scroll = 0
 		$Ground.position.x = -scroll
 		for pipe in pipes:
-			pipe.position.x -= SCROLL_SPEED
+			pipe.position.x -= scroll_speed
 
 func update_score_display():
 	for child in $ScoreContainer.get_children():
@@ -108,6 +117,8 @@ func check_top():
 
 func stop_game():
 	$PipeTimer.stop()
+	ScoreManager.submit_score(score)
+	$GameOver.set_scores(score, ScoreManager.high_score)
 	$GameOver.show()
 	$Bird.flying = false
 	game_running = false
@@ -122,7 +133,27 @@ func bird_hit():
 func scored():
 	score += 1
 	$PointSound.play()
+	_update_difficulty()
 	update_score_display()
+
+
+func _update_difficulty() -> void:
+	var new_level := mini(
+		floori(float(score) / DIFFICULTY_SCORE_STEP),
+		MAX_DIFFICULTY_LEVEL
+	)
+	if new_level == difficulty_level:
+		return
+
+	difficulty_level = new_level
+	_apply_difficulty()
+
+
+func _apply_difficulty() -> void:
+	scroll_speed = BASE_SCROLL_SPEED + SPEED_INCREASE_PER_LEVEL * difficulty_level
+	var speed_multiplier := scroll_speed / BASE_SCROLL_SPEED
+	var spacing_multiplier := 1.0 + PIPE_SPACING_INCREASE_PER_LEVEL * difficulty_level
+	$PipeTimer.wait_time = BASE_PIPE_INTERVAL * spacing_multiplier / speed_multiplier
 
 func _on_ground_hit() -> void:
 	$HitSound.play()
