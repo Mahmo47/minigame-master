@@ -1,0 +1,5 @@
+res://snake_game.tscn
+res://snake_renderer.gd
+res://snake_rules.gd
+res://snake_state.gd
+res://snake_game.gd

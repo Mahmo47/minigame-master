@@ -1,0 +1,10 @@
+78098b89c88a74ebe8c20117b8754620
+::res://::1787065907
+snake_game.gd::GDScript::2253244063424992566::1787058214::0::1::::SnakeGame<>Node2D<><>0<>0<><>::
+snake_game.tscn::PackedScene::-1::1787060521::0::1::::<><><>0<>0<><>::res://snake_game.gd
+snake_module_doku.md::TextFile::-1::1787058214::0::1::::<><><>0<>0<><>::
+snake_renderer.gd::GDScript::2457874986845225896::1787058214::0::1::::SnakeRenderer<>RefCounted<><>0<>0<><>::
+snake_rules.gd::GDScript::4689959986767365773::1787058235::0::1::::SnakeRules<>RefCounted<><>0<>0<><>::
+snake_state.gd::GDScript::3693965606452162371::1787058214::0::1::::SnakeState<>RefCounted<><>0<>0<><>::
+snake_user_guide.md::TextFile::-1::1787058214::0::1::::<><><>0<>0<><>::
+test.gd::GDScript::8335331072611086842::1787058214::0::1::::<>Node2D<><>0<>0<><>::
