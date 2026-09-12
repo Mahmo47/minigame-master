@@ -1,0 +1,839 @@
+[gd_scene load_steps=2 format=3 uid="uid://dvarjsx2j70i0"]
+
+[sub_resource type="GDScript" id="GDScript_rsn27"]
+script/source = "extends Control
+
+signal request_exit_to_host(final_score: int, matches: int, best_combo: int)
+
+const MemoryCardScript = preload(\"res://minigames/Memory-cards/scripts/MemoryCard.gd\")
+const CardImageManagerScript = preload(\"res://minigames/Memory-cards/scripts/CardImageManager.gd\")
+const LocalScoreManagerScript = preload(\"res://minigames/Memory-cards/scripts/LocalScoreManager.gd\")
+const UI = preload(\"res://minigames/Memory-cards/scripts/UITheme.gd\")
+
+const BOARD_COLUMNS: int = 5
+const PAIR_COUNT: int = 5
+const BASE_MATCH_POINTS: int = 220
+const COMBO_BONUS: int = 80
+const MISMATCH_PENALTY: int = 30
+const FOCUS_MAX: int = 100
+const FOCUS_MISMATCH_COST: int = 12
+const FOCUS_TIMEOUT_COST: int = 7
+const FOCUS_MATCH_RECOVERY: int = 3
+const DIFFICULTY_INTERVAL: float = 300.0
+const BASE_DECISION_WINDOW: float = 6.0
+const CARD_SIZE := Vector2(190, 190)
+
+var player_name: String = \"TESTPLAYER_LOCAL\"
+var image_manager
+var score_manager
+var card_textures: Array[Texture2D] = []
+var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+
+var card_back_texture: Texture2D
+var card_front_plate_texture: Texture2D
+var card_glow_texture: Texture2D
+var profile_texture: Texture2D
+var background_texture: Texture2D
+
+var board_grid: GridContainer
+var board_panel: PanelContainer
+var player_name_label: Label
+var personal_best_value: Label
+var leaderboard_box: VBoxContainer
+var score_value: Label
+var matches_value: Label
+var combo_value: Label
+var best_combo_value: Label
+var focus_value: Label
+var focus_bar: ProgressBar
+var difficulty_value: Label
+var decision_value: Label
+var status_label: Label
+var match_banner: PanelContainer
+var match_title: Label
+var match_subtitle: Label
+var pause_overlay: ColorRect
+var game_over_overlay: ColorRect
+var game_over_summary: Label
+var game_over_record: Label
+var effects_layer: Control
+
+var first_card = null
+var second_card = null
+var input_locked: bool = false
+var is_paused: bool = false
+var run_active: bool = false
+var elapsed_time: float = 0.0
+var decision_remaining: float = 0.0
+var score: int = 0
+var total_matches: int = 0
+var combo: int = 0
+var best_combo: int = 0
+var focus: int = FOCUS_MAX
+var next_pair_id: int = 0
+var pair_texture_indices: Dictionary = {}
+var cards: Array = []
+var personal_best: int = 0
+
+func set_player_profile(new_player_name: String) -> void:
+	var safe_name: String = new_player_name.strip_edges()
+	player_name = safe_name if safe_name != \"\" else \"Player\"
+	if player_name_label != null:
+		player_name_label.text = player_name
+	if score_manager != null:
+		personal_best = score_manager.get_personal_best(player_name)
+		_update_stats()
+
+func _ready() -> void:
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	set_process_unhandled_key_input(true)
+	rng.randomize()
+	image_manager = CardImageManagerScript.new()
+	score_manager = LocalScoreManagerScript.new()
+	card_textures = image_manager.load_card_textures()
+	card_back_texture = load(\"res://assets/card_faces_hq/card_back.png\")
+	card_front_plate_texture = load(\"res://assets/ui/card_front_plate.png\")
+	card_glow_texture = load(\"res://assets/ui/card_glow_frame.png\")
+	profile_texture = load(\"res://assets/ui/profile_medallion.png\")
+	background_texture = load(\"res://assets/ui/deep_space_observatory.png\")
+	personal_best = score_manager.get_personal_best(player_name)
+	_build_interface()
+	_start_new_run()
+
+func _process(delta: float) -> void:
+	if not run_active or is_paused:
+		return
+	elapsed_time += delta
+	if first_card != null and second_card == null and not input_locked:
+		decision_remaining -= delta
+		if decision_remaining <= 0.0:
+			_handle_first_card_timeout()
+	_update_stats()
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		var key_event: InputEventKey = event
+		if key_event.pressed and not key_event.echo and key_event.keycode == KEY_ESCAPE:
+			if run_active:
+				_toggle_pause()
+
+func _build_interface() -> void:
+	_build_background()
+
+	effects_layer = Control.new()
+	effects_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	effects_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	effects_layer.z_index = 40
+	add_child(effects_layer)
+
+	var outer: MarginContainer = MarginContainer.new()
+	outer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	UI.set_margins(outer, 14, 10, 14, 8)
+	add_child(outer)
+
+	var page: VBoxContainer = VBoxContainer.new()
+	page.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	page.add_theme_constant_override(\"separation\", 10)
+	outer.add_child(page)
+
+	page.add_child(_build_header())
+	page.add_child(_build_stats())
+
+	var content: HBoxContainer = HBoxContainer.new()
+	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override(\"separation\", 12)
+	page.add_child(content)
+	content.add_child(_build_sidebar())
+	content.add_child(_build_board())
+
+	page.add_child(_build_footer())
+	_build_pause_overlay()
+	_build_game_over_overlay()
+
+func _build_background() -> void:
+	var bg: TextureRect = TextureRect.new()
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.texture = background_texture
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_SCALE
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(bg)
+
+	var tint: ColorRect = ColorRect.new()
+	tint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tint.color = Color(0.02, 0.05, 0.10, 0.42)
+	tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(tint)
+
+func _build_header() -> Control:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override(\"separation\", 10)
+
+	var left_spacer: Control = Control.new()
+	left_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(left_spacer)
+
+	var brand: PanelContainer = PanelContainer.new()
+	brand.add_theme_stylebox_override(\"panel\", UI.panel_style(\"#0b1b2f\", \"#426f9e\", 20, 0.92, 10))
+	row.add_child(brand)
+	var margin: MarginContainer = MarginContainer.new()
+	UI.set_margins(margin, 18, 8, 18, 8)
+	brand.add_child(margin)
+	var brand_row: HBoxContainer = HBoxContainer.new()
+	brand_row.add_theme_constant_override(\"separation\", 10)
+	margin.add_child(brand_row)
+	var icon: TextureRect = TextureRect.new()
+	icon.texture = profile_texture
+	icon.custom_minimum_size = Vector2(40, 40)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	brand_row.add_child(icon)
+	var title: Label = Label.new()
+	title.text = \"MINIGAME MASTER · INFINITE MEMORY\"
+	title.add_theme_font_size_override(\"font_size\", 22)
+	title.add_theme_color_override(\"font_color\", Color.from_string(\"#f4f8ff\", Color.WHITE))
+	brand_row.add_child(title)
+
+	var right_spacer: Control = Control.new()
+	right_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(right_spacer)
+
+	var pause_button: Button = Button.new()
+	pause_button.text = \"II  PAUSE\"
+	pause_button.custom_minimum_size = Vector2(116, 46)
+	UI.apply_button(pause_button, false)
+	pause_button.pressed.connect(_toggle_pause)
+	row.add_child(pause_button)
+
+	return row
+
+func _build_stats() -> Control:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override(\"separation\", 8)
+	score_value = _add_stat(row, \"SCORE\", \"0\", \"★\", \"#78b6ff\")
+	matches_value = _add_stat(row, \"MATCHES\", \"0\", \"◎\", \"#9bd0ff\")
+	combo_value = _add_stat(row, \"COMBO\", \"x0\", \"✦\", \"#ffffff\")
+	best_combo_value = _add_stat(row, \"BEST COMBO\", \"x0\", \"♛\", \"#dce9ff\")
+	focus_value = _add_stat(row, \"FOCUS\", \"100%\", \"◉\", \"#83d7ff\")
+
+	var difficulty_panel: PanelContainer = PanelContainer.new()
+	difficulty_panel.custom_minimum_size = Vector2(250, 0)
+	difficulty_panel.add_theme_stylebox_override(\"panel\", UI.panel_style(\"#0a192b\", \"#365f8b\", 18, 0.94, 10))
+	row.add_child(difficulty_panel)
+	var margin: MarginContainer = MarginContainer.new()
+	UI.set_margins(margin, 14, 10, 14, 10)
+	difficulty_panel.add_child(margin)
+	var box: VBoxContainer = VBoxContainer.new()
+	box.add_theme_constant_override(\"separation\", 3)
+	margin.add_child(box)
+	var heading: Label = Label.new()
+	heading.text = \"∞  ENDLESS MODE\"
+	heading.add_theme_font_size_override(\"font_size\", 14)
+	heading.add_theme_color_override(\"font_color\", Color.from_string(\"#f1f7ff\", Color.WHITE))
+	box.add_child(heading)
+	difficulty_value = Label.new()
+	difficulty_value.add_theme_font_size_override(\"font_size\", 12)
+	difficulty_value.add_theme_color_override(\"font_color\", Color.from_string(\"#9eb8d4\", Color.WHITE))
+	box.add_child(difficulty_value)
+	decision_value = Label.new()
+	decision_value.add_theme_font_size_override(\"font_size\", 12)
+	decision_value.add_theme_color_override(\"font_color\", Color.from_string(\"#78b8ff\", Color.WHITE))
+	box.add_child(decision_value)
+	return row
+
+func _build_sidebar() -> Control:
+	var sidebar: VBoxContainer = VBoxContainer.new()
+	sidebar.custom_minimum_size = Vector2(292, 0)
+	sidebar.add_theme_constant_override(\"separation\", 10)
+
+	var profile_panel: PanelContainer = PanelContainer.new()
+	profile_panel.add_theme_stylebox_override(\"panel\", UI.panel_style(\"#0b1b2f\", \"#426f9e\", 20, 0.95, 10))
+	sidebar.add_child(profile_panel)
+	var profile_margin: MarginContainer = MarginContainer.new()
+	UI.set_margins(profile_margin, 16, 14, 16, 14)
+	profile_panel.add_child(profile_margin)
+	var pbox: VBoxContainer = VBoxContainer.new()
+	pbox.add_theme_constant_override(\"separation\", 6)
+	profile_margin.add_child(pbox)
+	var avatar: TextureRect = TextureRect.new()
+	avatar.texture = profile_texture
+	avatar.custom_minimum_size = Vector2(96, 96)
+	avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	pbox.add_child(avatar)
+	player_name_label = Label.new()
+	player_name_label.text = player_name
+	player_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	player_name_label.add_theme_font_size_override(\"font_size\", 20)
+	player_name_label.add_theme_color_override(\"font_color\", Color.from_string(\"#f2f7ff\", Color.WHITE))
+	pbox.add_child(player_name_label)
+	var profile_note: Label = Label.new()
+	profile_note.text = \"Profile will come later from the main menu\"
+	profile_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	profile_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	profile_note.add_theme_font_size_override(\"font_size\", 11)
+	profile_note.add_theme_color_override(\"font_color\", Color.from_string(\"#7aa8d5\", Color.WHITE))
+	pbox.add_child(profile_note)
+	var best_row: HBoxContainer = HBoxContainer.new()
+	best_row.add_theme_constant_override(\"separation\", 8)
+	pbox.add_child(best_row)
+	var best_title: Label = Label.new()
+	best_title.text = \"PERSONAL BEST\"
+	best_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	best_title.add_theme_font_size_override(\"font_size\", 12)
+	best_title.add_theme_color_override(\"font_color\", Color.from_string(\"#9eb6cf\", Color.WHITE))
+	best_row.add_child(best_title)
+	personal_best_value = Label.new()
+	personal_best_value.add_theme_font_size_override(\"font_size\", 17)
+	personal_best_value.add_theme_color_override(\"font_color\", Color.from_string(\"#f3f8ff\", Color.WHITE))
+	best_row.add_child(personal_best_value)
+
+	var focus_panel: PanelContainer = PanelContainer.new()
+	focus_panel.add_theme_stylebox_override(\"panel\", UI.panel_style(\"#0b1b2f\", \"#426f9e\", 18, 0.95, 10))
+	sidebar.add_child(focus_panel)
+	var focus_margin: MarginContainer = MarginContainer.new()
+	UI.set_margins(focus_margin, 14, 12, 14, 12)
+	focus_panel.add_child(focus_margin)
+	var fbox: VBoxContainer = VBoxContainer.new()
+	fbox.add_theme_constant_override(\"separation\", 6)
+	focus_margin.add_child(fbox)
+	var ftitle: Label = Label.new()
+	ftitle.text = \"FOCUS SYSTEM\"
+	ftitle.add_theme_font_size_override(\"font_size\", 13)
+	ftitle.add_theme_color_override(\"font_color\", Color.from_string(\"#7fc0ff\", Color.WHITE))
+	fbox.add_child(ftitle)
+	var fdesc: Label = Label.new()
+	fdesc.text = \"Mistakes and slow decisions reduce focus. Successful matches recover a little focus. At 0% the run ends.\"
+	fdesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	fdesc.add_theme_font_size_override(\"font_size\", 11)
+	fdesc.add_theme_color_override(\"font_color\", Color.from_string(\"#a9bfd5\", Color.WHITE))
+	fbox.add_child(fdesc)
+	focus_bar = ProgressBar.new()
+	focus_bar.min_value = 0
+	focus_bar.max_value = FOCUS_MAX
+	focus_bar.value = FOCUS_MAX
+	focus_bar.show_percentage = false
+	focus_bar.custom_minimum_size = Vector2(0, 14)
+	fbox.add_child(focus_bar)
+
+	var leaderboard_panel: PanelContainer = PanelContainer.new()
+	leaderboard_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	leaderboard_panel.add_theme_stylebox_override(\"panel\", UI.panel_style(\"#0b1b2f\", \"#426f9e\", 20, 0.95, 10))
+	sidebar.add_child(leaderboard_panel)
+	var lb_margin: MarginContainer = MarginContainer.new()
+	UI.set_margins(lb_margin, 14, 14, 14, 14)
+	leaderboard_panel.add_child(lb_margin)
+	var lbbox: VBoxContainer = VBoxContainer.new()
+	lbbox.add_theme_constant_override(\"separation\", 8)
+	lb_margin.add_child(lbbox)
+	var lbtitle: Label = Label.new()
+	lbtitle.text = \"LEADERBOARD · TEST DATA\"
+	lbtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbtitle.add_theme_font_size_override(\"font_size\", 15)
+	lbtitle.add_theme_color_override(\"font_color\", Color.from_string(\"#f0f6ff\", Color.WHITE))
+	lbbox.add_child(lbtitle)
+	var lbnote: Label = Label.new()
+	lbnote.text = \"UI demo only · not real players\"
+	lbnote.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbnote.add_theme_font_size_override(\"font_size\", 11)
+	lbnote.add_theme_color_override(\"font_color\", Color.from_string(\"#6fa9e2\", Color.WHITE))
+	lbbox.add_child(lbnote)
+	leaderboard_box = VBoxContainer.new()
+	leaderboard_box.add_theme_constant_override(\"separation\", 6)
+	lbbox.add_child(leaderboard_box)
+	_build_test_leaderboard()
+
+	return sidebar
+
+func _build_board() -> Control:
+	board_panel = PanelContainer.new()
+	board_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	board_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	board_panel.add_theme_stylebox_override(\"panel\", UI.panel_style(\"#08182a\", \"#4779a9\", 22, 0.92, 14))
+	var margin: MarginContainer = MarginContainer.new()
+	UI.set_margins(margin, 14, 14, 14, 14)
+	board_panel.add_child(margin)
+	var box: VBoxContainer = VBoxContainer.new()
+	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override(\"separation\", 10)
+	margin.add_child(box)
+
+	var board_center: CenterContainer = CenterContainer.new()
+	board_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	board_center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(board_center)
+	board_grid = GridContainer.new()
+	board_grid.columns = BOARD_COLUMNS
+	board_grid.add_theme_constant_override(\"h_separation\", 12)
+	board_grid.add_theme_constant_override(\"v_separation\", 12)
+	board_center.add_child(board_grid)
+
+	match_banner = PanelContainer.new()
+	match_banner.visible = false
+	match_banner.add_theme_stylebox_override(\"panel\", UI.panel_style(\"#0a1e38\", \"#58a5ff\", 18, 0.97, 14))
+	box.add_child(match_banner)
+	var banner_margin: MarginContainer = MarginContainer.new()
+	UI.set_margins(banner_margin, 14, 8, 14, 8)
+	match_banner.add_child(banner_margin)
+	var banner_box: VBoxContainer = VBoxContainer.new()
+	banner_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	banner_box.add_theme_constant_override(\"separation\", 2)
+	banner_margin.add_child(banner_box)
+	match_title = Label.new()
+	match_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	match_title.add_theme_font_size_override(\"font_size\", 24)
+	match_title.add_theme_color_override(\"font_color\", Color.WHITE)
+	banner_box.add_child(match_title)
+	match_subtitle = Label.new()
+	match_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	match_subtitle.add_theme_font_size_override(\"font_size\", 14)
+	match_subtitle.add_theme_color_override(\"font_color\", Color.from_string(\"#7cbdff\", Color.WHITE))
+	banner_box.add_child(match_subtitle)
+	return board_panel
+
+func _build_footer() -> Control:
+	var panel: PanelContainer = PanelContainer.new()
+	panel.add_theme_stylebox_override(\"panel\", UI.panel_style(\"#0a192b\", \"#365f8b\", 14, 0.94, 6))
+	var margin: MarginContainer = MarginContainer.new()
+	UI.set_margins(margin, 12, 8, 12, 8)
+	panel.add_child(margin)
+	status_label = Label.new()
+	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status_label.add_theme_font_size_override(\"font_size\", 12)
+	status_label.add_theme_color_override(\"font_color\", Color.from_string(\"#c8d8e9\", Color.WHITE))
+	margin.add_child(status_label)
+	return panel
+
+func _build_pause_overlay() -> void:
+	pause_overlay = ColorRect.new()
+	pause_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pause_overlay.color = Color(0.0, 0.0, 0.0, 0.72)
+	pause_overlay.visible = false
+	pause_overlay.z_index = 100
+	pause_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(pause_overlay)
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pause_overlay.add_child(center)
+	var panel: PanelContainer = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(460, 280)
+	panel.add_theme_stylebox_override(\"panel\", UI.panel_style(\"#0b1c31\", \"#5c9de1\", 26, 1.0, 20))
+	center.add_child(panel)
+	var margin: MarginContainer = MarginContainer.new()
+	UI.set_margins(margin, 30, 24, 30, 24)
+	panel.add_child(margin)
+	var box: VBoxContainer = VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override(\"separation\", 12)
+	margin.add_child(box)
+	var title: Label = Label.new()
+	title.text = \"PAUSED\"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override(\"font_size\", 30)
+	title.add_theme_color_override(\"font_color\", Color.WHITE)
+	box.add_child(title)
+	var description: Label = Label.new()
+	description.text = \"During pause, the focus timer and difficulty progression stop.\\nNo save state is created during a run.\"
+	description.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description.add_theme_font_size_override(\"font_size\", 14)
+	description.add_theme_color_override(\"font_color\", Color.from_string(\"#abc4dd\", Color.WHITE))
+	box.add_child(description)
+	var resume: Button = Button.new()
+	resume.text = \"RESUME\"
+	resume.custom_minimum_size = Vector2(250, 46)
+	UI.apply_button(resume, true)
+	resume.pressed.connect(_toggle_pause)
+	box.add_child(resume)
+	var end_run: Button = Button.new()
+	end_run.text = \"END RUN & RETURN\"
+	end_run.custom_minimum_size = Vector2(250, 46)
+	UI.apply_button(end_run, false)
+	end_run.pressed.connect(func() -> void: _finish_run(\"Run ended manually\"))
+	box.add_child(end_run)
+
+func _build_game_over_overlay() -> void:
+	game_over_overlay = ColorRect.new()
+	game_over_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	game_over_overlay.color = Color(0.0, 0.0, 0.0, 0.76)
+	game_over_overlay.visible = false
+	game_over_overlay.z_index = 110
+	game_over_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(game_over_overlay)
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	game_over_overlay.add_child(center)
+	var panel: PanelContainer = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(520, 340)
+	panel.add_theme_stylebox_override(\"panel\", UI.panel_style(\"#0b1c31\", \"#5c9de1\", 26, 1.0, 22))
+	center.add_child(panel)
+	var margin: MarginContainer = MarginContainer.new()
+	UI.set_margins(margin, 32, 26, 32, 26)
+	panel.add_child(margin)
+	var box: VBoxContainer = VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override(\"separation\", 12)
+	margin.add_child(box)
+	var title: Label = Label.new()
+	title.text = \"RUN OVER\"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override(\"font_size\", 30)
+	title.add_theme_color_override(\"font_color\", Color.WHITE)
+	box.add_child(title)
+	game_over_summary = Label.new()
+	game_over_summary.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	game_over_summary.add_theme_font_size_override(\"font_size\", 16)
+	game_over_summary.add_theme_color_override(\"font_color\", Color.from_string(\"#d4e4f4\", Color.WHITE))
+	box.add_child(game_over_summary)
+	game_over_record = Label.new()
+	game_over_record.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	game_over_record.add_theme_font_size_override(\"font_size\", 14)
+	game_over_record.add_theme_color_override(\"font_color\", Color.from_string(\"#77beff\", Color.WHITE))
+	box.add_child(game_over_record)
+	var again: Button = Button.new()
+	again.text = \"NEW RUN\"
+	again.custom_minimum_size = Vector2(240, 46)
+	UI.apply_button(again, true)
+	again.pressed.connect(_start_new_run)
+	box.add_child(again)
+	var exit_button: Button = Button.new()
+	exit_button.text = \"RETURN TO HOST\"
+	exit_button.custom_minimum_size = Vector2(240, 46)
+	UI.apply_button(exit_button, false)
+	exit_button.pressed.connect(_emit_exit)
+	box.add_child(exit_button)
+
+func _start_new_run() -> void:
+	is_paused = false
+	pause_overlay.visible = false
+	game_over_overlay.visible = false
+	run_active = true
+	input_locked = false
+	elapsed_time = 0.0
+	decision_remaining = 0.0
+	score = 0
+	total_matches = 0
+	combo = 0
+	best_combo = 0
+	focus = FOCUS_MAX
+	next_pair_id = 0
+	first_card = null
+	second_card = null
+	pair_texture_indices.clear()
+	cards.clear()
+	_clear_board()
+	if not _populate_board():
+		run_active = false
+		status_label.text = \"Not enough card images. Required: %d\" % PAIR_COUNT
+		return
+	status_label.text = \"Infinite Memory is running: matched pairs disappear. Clear all 5 pairs to refill the board.\"
+	_update_stats()
+
+func _populate_board() -> bool:
+	if card_textures.size() < PAIR_COUNT:
+		return false
+	pair_texture_indices.clear()
+	cards.clear()
+	var indices: Array[int] = []
+	for i in range(card_textures.size()):
+		indices.append(i)
+	indices.shuffle()
+	var deck: Array[Dictionary] = []
+	for pair_number in range(PAIR_COUNT):
+		var texture_index: int = indices[pair_number]
+		var pair_id: int = next_pair_id
+		next_pair_id += 1
+		pair_texture_indices[pair_id] = texture_index
+		deck.append({\"pair_id\": pair_id, \"texture_index\": texture_index})
+		deck.append({\"pair_id\": pair_id, \"texture_index\": texture_index})
+	deck.shuffle()
+	for entry in deck:
+		var card = MemoryCardScript.new()
+		board_grid.add_child(card)
+		var texture_index: int = int(entry[\"texture_index\"])
+		card.setup(int(entry[\"pair_id\"]), texture_index, card_textures[texture_index], CARD_SIZE, card_back_texture, card_front_plate_texture, card_glow_texture)
+		card.card_selected.connect(_on_card_selected)
+		cards.append(card)
+	return true
+
+func _refill_board() -> void:
+	if not run_active or focus <= 0:
+		return
+	first_card = null
+	second_card = null
+	input_locked = false
+	decision_remaining = 0.0
+	_clear_board()
+	if _populate_board():
+		status_label.text = \"Board refilled. Keep going!\"
+		_update_stats()
+	else:
+		run_active = false
+		status_label.text = \"Not enough card images. Required: %d\" % PAIR_COUNT
+
+func _on_card_selected(card) -> void:
+	if not run_active or is_paused or input_locked:
+		return
+	if card == first_card:
+		return
+	card.reveal()
+	if first_card == null:
+		first_card = card
+		decision_remaining = _current_decision_window()
+		status_label.text = \"Choose a second card · %.1f s decision time\" % decision_remaining
+		return
+	second_card = card
+	decision_remaining = 0.0
+	input_locked = true
+	if int(first_card.pair_id) == int(second_card.pair_id):
+		await _resolve_match(first_card, second_card)
+	else:
+		await _resolve_mismatch(first_card, second_card)
+	first_card = null
+	second_card = null
+	input_locked = false
+	_update_stats()
+
+func _resolve_match(card_a, card_b) -> void:
+	combo += 1
+	best_combo = max(best_combo, combo)
+	total_matches += 1
+	var points: int = BASE_MATCH_POINTS + combo * COMBO_BONUS
+	score += points
+	focus = min(FOCUS_MAX, focus + FOCUS_MATCH_RECOVERY)
+	card_a.play_match_effect()
+	card_b.play_match_effect()
+	_show_banner(\"MATCHED!\", \"+%d points · x%d combo · +%d%% focus\" % [points, combo, FOCUS_MATCH_RECOVERY], false)
+	_spawn_sparks((card_a.global_position + card_b.global_position) * 0.5 + Vector2(CARD_SIZE.x * 0.5, CARD_SIZE.y * 0.5))
+	await get_tree().create_timer(0.46).timeout
+	var board_cleared: bool = _consume_matched_pair(card_a, card_b)
+	if board_cleared and focus > 0 and run_active:
+		_show_banner(\"BOARD CLEARED!\", \"New cards incoming...\", false)
+		status_label.text = \"Board cleared. Refilling with new pairs...\"
+		await get_tree().create_timer(0.45).timeout
+		_refill_board()
+
+func _resolve_mismatch(card_a, card_b) -> void:
+	combo = 0
+	score = max(0, score - MISMATCH_PENALTY)
+	focus = max(0, focus - FOCUS_MISMATCH_COST)
+	card_a.play_wrong_effect()
+	card_b.play_wrong_effect()
+	_show_banner(\"NO MATCH\", \"-%d points · -%d%% focus\" % [MISMATCH_PENALTY, FOCUS_MISMATCH_COST], true)
+	await get_tree().create_timer(_current_mismatch_delay()).timeout
+	card_a.conceal()
+	card_b.conceal()
+	if focus <= 0:
+		await get_tree().create_timer(0.20).timeout
+		_finish_run(\"Focus dropped to 0%\")
+
+func _handle_first_card_timeout() -> void:
+	if first_card == null or input_locked or is_paused or not run_active:
+		return
+	input_locked = true
+	first_card.conceal()
+	first_card = null
+	combo = 0
+	focus = max(0, focus - FOCUS_TIMEOUT_COST)
+	decision_remaining = 0.0
+	_show_banner(\"TOO SLOW\", \"-%d%% focus · combo reset\" % FOCUS_TIMEOUT_COST, true)
+	status_label.text = \"Decision time expired.\"
+	input_locked = false
+	if focus <= 0:
+		_finish_run(\"Focus dropped to 0%\")
+
+func _consume_matched_pair(card_a, card_b) -> bool:
+	var old_pair_id: int = int(card_a.pair_id)
+	pair_texture_indices.erase(old_pair_id)
+	for matched_card in [card_a, card_b]:
+		if cards.has(matched_card):
+			cards.erase(matched_card)
+		matched_card.play_disappear_effect()
+	return cards.is_empty()
+
+func _current_difficulty_step() -> int:
+
+	return int(floor(elapsed_time / DIFFICULTY_INTERVAL))
+
+func _current_speed_multiplier() -> float:
+	return 1.0 + float(_current_difficulty_step()) * 0.10
+
+func _current_decision_window() -> float:
+	return max(1.8, BASE_DECISION_WINDOW / _current_speed_multiplier())
+
+func _current_mismatch_delay() -> float:
+	return max(0.30, 0.90 / _current_speed_multiplier())
+
+func _toggle_pause() -> void:
+	if not run_active:
+		return
+	is_paused = not is_paused
+	pause_overlay.visible = is_paused
+	status_label.text = \"Game paused.\" if is_paused else \"Game resumed.\"
+
+func _finish_run(reason: String) -> void:
+	if not run_active:
+		return
+	run_active = false
+	is_paused = false
+	pause_overlay.visible = false
+	decision_remaining = 0.0
+	var is_record: bool = score_manager.save_result(player_name, score, total_matches, best_combo)
+	personal_best = max(personal_best, score)
+	game_over_summary.text = \"%s\\n\\nScore: %s · Matches: %d · Best combo: x%d\" % [reason, _format_number(score), total_matches, best_combo]
+	game_over_record.text = \"NEW PERSONAL BEST\" if is_record else \"Personal best: %s\" % _format_number(personal_best)
+	game_over_overlay.visible = true
+	_update_stats()
+
+func _emit_exit() -> void:
+	request_exit_to_host.emit(score, total_matches, best_combo)
+
+func _show_banner(title_text: String, subtitle_text: String, negative: bool) -> void:
+	match_title.text = title_text
+	match_subtitle.text = subtitle_text
+	match_title.add_theme_color_override(\"font_color\", Color.from_string(\"#ffb6b6\", Color.WHITE) if negative else Color.from_string(\"#f4f9ff\", Color.WHITE))
+	match_subtitle.add_theme_color_override(\"font_color\", Color.from_string(\"#ff9292\", Color.WHITE) if negative else Color.from_string(\"#72baff\", Color.WHITE))
+	match_banner.visible = true
+	match_banner.modulate = Color(1, 1, 1, 0)
+	match_banner.scale = Vector2(0.95, 0.95)
+	var tween: Tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(match_banner, \"modulate\", Color.WHITE, 0.14)
+	tween.tween_property(match_banner, \"scale\", Vector2.ONE, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	var hide: Tween = create_tween()
+	hide.tween_interval(1.00)
+	hide.tween_property(match_banner, \"modulate\", Color(1, 1, 1, 0), 0.30)
+	hide.tween_callback(func() -> void: match_banner.visible = false)
+
+func _spawn_sparks(center_position: Vector2) -> void:
+	for i in range(12):
+		var spark: Label = Label.new()
+		spark.text = \"✦\"
+		spark.add_theme_font_size_override(\"font_size\", rng.randi_range(12, 22))
+		spark.add_theme_color_override(\"font_color\", Color.from_string(\"#79bcff\", Color.WHITE))
+		spark.position = center_position
+		spark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		effects_layer.add_child(spark)
+		var angle: float = rng.randf_range(0.0, TAU)
+		var distance: float = rng.randf_range(45.0, 120.0)
+		var target: Vector2 = center_position + Vector2(cos(angle), sin(angle)) * distance
+		var tween: Tween = spark.create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(spark, \"position\", target, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(spark, \"modulate\", Color(1, 1, 1, 0), 0.55)
+		tween.chain().tween_callback(spark.queue_free)
+
+func _update_stats() -> void:
+	if score_value == null:
+		return
+	score_value.text = _format_number(score)
+	matches_value.text = str(total_matches)
+	combo_value.text = \"x%d\" % combo
+	best_combo_value.text = \"x%d\" % best_combo
+	focus_value.text = \"%d%%\" % focus
+	focus_bar.value = focus
+	personal_best_value.text = _format_number(personal_best)
+	var difficulty_percent: int = _current_difficulty_step() * 10
+	difficulty_value.text = \"Difficulty +10%% every 5 min · current +%d%%\" % difficulty_percent
+	if first_card != null and second_card == null and run_active:
+		decision_value.text = \"Decision time: %.1f s\" % max(0.0, decision_remaining)
+	else:
+		decision_value.text = \"Decision window: %.1f s\" % _current_decision_window()
+
+func _build_test_leaderboard() -> void:
+	var test_users: Array[Dictionary] = [
+		{\"name\": \"TESTUSER_01\", \"score\": 98750},
+		{\"name\": \"TESTUSER_02\", \"score\": 87430},
+		{\"name\": \"TESTUSER_03\", \"score\": 75210},
+		{\"name\": \"TESTUSER_04\", \"score\": 64890},
+		{\"name\": \"TESTUSER_05\", \"score\": 59640}
+	]
+	for index in range(test_users.size()):
+		var entry: Dictionary = test_users[index]
+		leaderboard_box.add_child(_leaderboard_row(index + 1, str(entry[\"name\"]), int(entry[\"score\"])))
+
+func _leaderboard_row(rank: int, user_name: String, points: int) -> Control:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override(\"separation\", 8)
+	var badge: Label = Label.new()
+	badge.text = str(rank)
+	badge.custom_minimum_size = Vector2(30, 30)
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge.add_theme_font_size_override(\"font_size\", 14)
+	badge.add_theme_color_override(\"font_color\", Color.WHITE)
+	var badge_bg: String = \"#a67424\" if rank == 1 else (\"#657487\" if rank == 2 else (\"#84583b\" if rank == 3 else \"#243a55\"))
+	badge.add_theme_stylebox_override(\"normal\", UI.button_style(badge_bg, \"#7f9fbe\", 15))
+	row.add_child(badge)
+	var name_label: Label = Label.new()
+	name_label.text = user_name
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.add_theme_font_size_override(\"font_size\", 12)
+	name_label.add_theme_color_override(\"font_color\", Color.from_string(\"#eaf3ff\", Color.WHITE))
+	row.add_child(name_label)
+	var score_label: Label = Label.new()
+	score_label.text = _format_number(points)
+	score_label.add_theme_font_size_override(\"font_size\", 12)
+	score_label.add_theme_color_override(\"font_color\", Color.from_string(\"#bcd0e5\", Color.WHITE))
+	row.add_child(score_label)
+	return row
+
+func _add_stat(parent: HBoxContainer, heading_text: String, initial: String, symbol: String, accent_hex: String) -> Label:
+	var panel: PanelContainer = PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override(\"panel\", UI.panel_style(\"#0a192b\", \"#365f8b\", 18, 0.94, 8))
+	parent.add_child(panel)
+	var margin: MarginContainer = MarginContainer.new()
+	UI.set_margins(margin, 12, 8, 12, 8)
+	panel.add_child(margin)
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override(\"separation\", 9)
+	margin.add_child(row)
+	var icon: Label = Label.new()
+	icon.text = symbol
+	icon.add_theme_font_size_override(\"font_size\", 22)
+	icon.add_theme_color_override(\"font_color\", Color.from_string(accent_hex, Color.WHITE))
+	row.add_child(icon)
+	var box: VBoxContainer = VBoxContainer.new()
+	box.add_theme_constant_override(\"separation\", 1)
+	row.add_child(box)
+	var heading: Label = Label.new()
+	heading.text = heading_text
+	heading.add_theme_font_size_override(\"font_size\", 10)
+	heading.add_theme_color_override(\"font_color\", Color.from_string(\"#9cb5cf\", Color.WHITE))
+	box.add_child(heading)
+	var value: Label = Label.new()
+	value.text = initial
+	value.add_theme_font_size_override(\"font_size\", 20)
+	value.add_theme_color_override(\"font_color\", Color.from_string(accent_hex, Color.WHITE))
+	box.add_child(value)
+	return value
+
+func _clear_board() -> void:
+	if board_grid == null:
+		return
+	for child in board_grid.get_children():
+		board_grid.remove_child(child)
+		child.queue_free()
+
+func _format_number(value: int) -> String:
+	var raw: String = str(max(0, value))
+	var formatted: String = \"\"
+	var count: int = 0
+	for index in range(raw.length() - 1, -1, -1):
+		if count > 0 and count % 3 == 0:
+			formatted = \",\" + formatted
+		formatted = raw[index] + formatted
+		count += 1
+	return formatted
+"
+
+[node name="MemoryGame" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = SubResource("GDScript_rsn27")
