@@ -2,3 +2,7 @@ res://minigames/flappy-bird/scenes/bird.gd
 res://minigames/flappy-bird/scenes/main.gd
 res://Scripts/01_main_menu.gd
 res://Scripts/02_game_selector.gd
+res://minigames/fruit-catch/fruitcatch_game.gd
+res://minigames/memory/scripts/MemoryGame.gd
+res://minigames/snake/snake_game.gd
+res://minigames/snake/snake_renderer.gd

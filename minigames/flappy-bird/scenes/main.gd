@@ -2,6 +2,8 @@ extends Node
 
 @export var pipe_scene : PackedScene
 
+const GAME_ID := "flappy_bird"
+
 var digit_textures = [
 	preload("res://minigames/flappy-bird/assets/numbers/0.png"),
 	preload("res://minigames/flappy-bird/assets/numbers/1.png"),
@@ -19,6 +21,7 @@ var game_running : bool
 var game_over : bool
 var scroll
 var score: int
+var high_score: int
 var scroll_speed: float
 var difficulty_level: int
 var screen_size: Vector2
@@ -37,6 +40,7 @@ const PIPE_RANGE : int = 200
 const ORIGINAL_PLAYFIELD_SIZE := Vector2(864.0, 768.0)
 
 func _ready():
+	high_score = LocalScore.get_high_score(GAME_ID)
 	get_viewport().size_changed.connect(_resize_game)
 	_resize_game()
 	new_game()
@@ -149,6 +153,7 @@ func update_score_display():
 		digit.custom_minimum_size = Vector2(32, 48)
 		digit.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		$ScoreContainer.add_child(digit)
+	$HighScoreLabel.text = "HIGH SCORE  %d" % maxi(high_score, score)
 
 func _on_pipe_timer_timeout() -> void:
 	generate_pipes()
@@ -187,8 +192,10 @@ func check_top():
 
 func stop_game():
 	$PipeTimer.stop()
-	#ScoreManager.submit_score(score)
-	#$GameOver.set_scores(score, ScoreManager.high_score)
+	LocalScore.submit_score(GAME_ID, score)
+	high_score = maxi(high_score, score)
+	$GameOver.set_scores(score, high_score)
+	update_score_display()
 	$GameOver.show()
 	$Bird.flying = false
 	game_running = false

@@ -138,8 +138,7 @@ theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_oa1go")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_rtw2f")
 theme_override_styles/hover = SubResource("StyleBoxFlat_tbmy8")
-text = "BACK TO 
-MAIN MENU"
+text = "BACK TO MAIN MENU"
 
 [connection signal="pressed" from="Restart" to="." method="_on_restart_pressed"]
 [connection signal="pressed" from="BackToMain" to="." method="_on_back_to_main_pressed"]

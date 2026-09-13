@@ -57,6 +57,24 @@ anchor_left = 0.5
 anchor_right = 0.5
 grow_horizontal = 2
 
+[node name="HighScoreLabel" type="Label" parent="."]
+z_index = 2
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -260.0
+offset_top = 18.0
+offset_right = -28.0
+offset_bottom = 58.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1, 0.86, 0.32, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.55)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 22
+text = "HIGH SCORE  0"
+horizontal_alignment = 2
+
 [connection signal="hit" from="Ground" to="." method="_on_ground_hit"]
 [connection signal="timeout" from="PipeTimer" to="." method="_on_pipe_timer_timeout"]
 [connection signal="back" from="GameOver" to="." method="_on_game_over_back"]

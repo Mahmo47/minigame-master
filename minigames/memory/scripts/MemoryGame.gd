@@ -4,8 +4,8 @@ signal request_exit_to_host(final_score: int, matches: int, best_combo: int)
 
 const MemoryCardScript = preload("res://minigames/memory/scripts/MemoryCard.gd")
 const CardImageManagerScript = preload("res://minigames/memory/scripts/CardImageManager.gd")
-const LocalScoreManagerScript = preload("res://minigames/memory/scripts/LocalScoreManager.gd")
 const UI = preload("res://minigames/memory/scripts/UITheme.gd")
+const GAME_ID := "memory_cards"
 
 const BOARD_COLUMNS: int = 5
 const PAIR_COUNT: int = 5
@@ -22,7 +22,6 @@ const CARD_SIZE := Vector2(190, 190)
 
 var player_name: String = "TESTPLAYER_LOCAL"
 var image_manager
-var score_manager
 var card_textures: Array[Texture2D] = []
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
@@ -37,6 +36,7 @@ var board_panel: PanelContainer
 var player_name_label: Label
 var personal_best_value: Label
 var leaderboard_box: VBoxContainer
+var leaderboard_score_value: Label
 var score_value: Label
 var matches_value: Label
 var combo_value: Label
@@ -77,23 +77,21 @@ func set_player_profile(new_player_name: String) -> void:
 	player_name = safe_name if safe_name != "" else "Player"
 	if player_name_label != null:
 		player_name_label.text = player_name
-	if score_manager != null:
-		personal_best = score_manager.get_personal_best(player_name)
-		_update_stats()
+	personal_best = LocalScore.get_high_score(GAME_ID)
+	_update_stats()
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	set_process_unhandled_key_input(true)
 	rng.randomize()
 	image_manager = CardImageManagerScript.new()
-	score_manager = LocalScoreManagerScript.new()
 	card_textures = image_manager.load_card_textures()
 	card_back_texture = load("res://minigames/memory/assets/card_faces_hq/card_back.png")
 	card_front_plate_texture = load("res://minigames/memory/assets/ui/card_front_plate.png")
 	card_glow_texture = load("res://minigames/memory/assets/ui/card_glow_frame.png")
 	profile_texture = load("res://minigames/memory/assets/ui/profile_medallion.png")
 	background_texture = load("res://minigames/memory/assets/ui/deep_space_observatory.png")
-	personal_best = score_manager.get_personal_best(player_name)
+	personal_best = LocalScore.get_high_score(GAME_ID)
 	_build_interface()
 	_start_new_run()
 
@@ -265,7 +263,7 @@ func _build_sidebar() -> Control:
 	player_name_label.add_theme_color_override("font_color", Color.from_string("#f2f7ff", Color.WHITE))
 	pbox.add_child(player_name_label)
 	var profile_note: Label = Label.new()
-	profile_note.text = "Profile will come later from the main menu"
+	profile_note.text = "Local player · saved on this device"
 	profile_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	profile_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	profile_note.add_theme_font_size_override("font_size", 11)
@@ -324,13 +322,13 @@ func _build_sidebar() -> Control:
 	lbbox.add_theme_constant_override("separation", 8)
 	lb_margin.add_child(lbbox)
 	var lbtitle: Label = Label.new()
-	lbtitle.text = "LEADERBOARD · TEST DATA"
+	lbtitle.text = "LOCAL HIGH SCORE"
 	lbtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbtitle.add_theme_font_size_override("font_size", 15)
 	lbtitle.add_theme_color_override("font_color", Color.from_string("#f0f6ff", Color.WHITE))
 	lbbox.add_child(lbtitle)
 	var lbnote: Label = Label.new()
-	lbnote.text = "UI demo only · not real players"
+	lbnote.text = "Your best run on this device"
 	lbnote.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbnote.add_theme_font_size_override("font_size", 11)
 	lbnote.add_theme_color_override("font_color", Color.from_string("#6fa9e2", Color.WHITE))
@@ -338,7 +336,7 @@ func _build_sidebar() -> Control:
 	leaderboard_box = VBoxContainer.new()
 	leaderboard_box.add_theme_constant_override("separation", 6)
 	lbbox.add_child(leaderboard_box)
-	_build_test_leaderboard()
+	_build_local_leaderboard()
 
 	return sidebar
 
@@ -495,19 +493,18 @@ func _build_game_over_overlay() -> void:
 	again.pressed.connect(_start_new_run)
 	box.add_child(again)
 	var exit_button: Button = Button.new()
-	exit_button.text = "RETURN TO HOST"
-
-	
-
-	
-	exit_button.pressed.connect(main_menu)
+	exit_button.text = "BACK TO MAIN MENU"
 	exit_button.custom_minimum_size = Vector2(240, 46)
 	UI.apply_button(exit_button, false)
-	exit_button.pressed.connect(_emit_exit)
+	exit_button.pressed.connect(_exit_to_main_menu)
 	box.add_child(exit_button)
 
 func main_menu() -> void:
 	get_tree().change_scene_to_file("res://Scenes/02_game_selector.tscn")
+
+func _exit_to_main_menu() -> void:
+	_emit_exit()
+	main_menu()
 		
 func _start_new_run() -> void:
 	is_paused = false
@@ -684,7 +681,7 @@ func _finish_run(reason: String) -> void:
 	is_paused = false
 	pause_overlay.visible = false
 	decision_remaining = 0.0
-	var is_record: bool = score_manager.save_result(player_name, score, total_matches, best_combo)
+	var is_record: bool = LocalScore.submit_score(GAME_ID, score)
 	personal_best = max(personal_best, score)
 	game_over_summary.text = "%s\n\nScore: %s · Matches: %d · Best combo: x%d" % [reason, _format_number(score), total_matches, best_combo]
 	game_over_record.text = "NEW PERSONAL BEST" if is_record else "Personal best: %s" % _format_number(personal_best)
@@ -692,6 +689,8 @@ func _finish_run(reason: String) -> void:
 	_update_stats()
 
 func _emit_exit() -> void:
+	LocalScore.submit_score(GAME_ID, score)
+	personal_best = maxi(personal_best, score)
 	request_exit_to_host.emit(score, total_matches, best_combo)
 
 func _show_banner(title_text: String, subtitle_text: String, negative: bool) -> void:
@@ -738,7 +737,9 @@ func _update_stats() -> void:
 	best_combo_value.text = "x%d" % best_combo
 	focus_value.text = "%d%%" % focus
 	focus_bar.value = focus
-	personal_best_value.text = _format_number(personal_best)
+	personal_best_value.text = _format_number(maxi(personal_best, score))
+	if leaderboard_score_value != null:
+		leaderboard_score_value.text = _format_number(maxi(personal_best, score))
 	var difficulty_percent: int = _current_difficulty_step() * 10
 	difficulty_value.text = "Difficulty +10%% every 5 min · current +%d%%" % difficulty_percent
 	if first_card != null and second_card == null and run_active:
@@ -746,17 +747,8 @@ func _update_stats() -> void:
 	else:
 		decision_value.text = "Decision window: %.1f s" % _current_decision_window()
 
-func _build_test_leaderboard() -> void:
-	var test_users: Array[Dictionary] = [
-		{"name": "TESTUSER_01", "score": 98750},
-		{"name": "TESTUSER_02", "score": 87430},
-		{"name": "TESTUSER_03", "score": 75210},
-		{"name": "TESTUSER_04", "score": 64890},
-		{"name": "TESTUSER_05", "score": 59640}
-	]
-	for index in range(test_users.size()):
-		var entry: Dictionary = test_users[index]
-		leaderboard_box.add_child(_leaderboard_row(index + 1, str(entry["name"]), int(entry["score"])))
+func _build_local_leaderboard() -> void:
+	leaderboard_box.add_child(_leaderboard_row(1, "YOU", personal_best))
 
 func _leaderboard_row(rank: int, user_name: String, points: int) -> Control:
 	var row: HBoxContainer = HBoxContainer.new()
@@ -782,6 +774,8 @@ func _leaderboard_row(rank: int, user_name: String, points: int) -> Control:
 	score_label.add_theme_font_size_override("font_size", 12)
 	score_label.add_theme_color_override("font_color", Color.from_string("#bcd0e5", Color.WHITE))
 	row.add_child(score_label)
+	if user_name == "YOU":
+		leaderboard_score_value = score_label
 	return row
 
 func _add_stat(parent: HBoxContainer, heading_text: String, initial: String, symbol: String, accent_hex: String) -> Label:

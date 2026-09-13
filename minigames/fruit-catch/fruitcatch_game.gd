@@ -1,5 +1,7 @@
 extends Node2D
 
+const GAME_ID := "fruit_catch"
+
 @export var apple_speed_min: float = 150.0
 @export var apple_speed_max: float = 300.0
 @export var spawn_interval_min: float = 0.5
@@ -7,6 +9,7 @@ extends Node2D
 @export var basket_speed: float = 500.0
 
 var score: int = 0
+var high_score: int = 0
 var is_game_over: bool = false
 var apples: Array = []
 var floor_y: float
@@ -16,12 +19,15 @@ var screen_size: Vector2
 @onready var line_2d: Line2D = $Line2D
 @onready var spawn_timer: Timer = $SpawnTimer
 @onready var score_label: Label = $CanvasLayer/UI/ScoreLabel
+@onready var high_score_label: Label = $CanvasLayer/UI/HighScoreLabel
 @onready var game_over_panel: Control = $CanvasLayer/UI/GameOverPanel
 @onready var final_score_label: Label = $CanvasLayer/UI/GameOverPanel/VBoxContainer/FinalScoreLabel
+@onready var final_high_score_label: Label = $CanvasLayer/UI/GameOverPanel/VBoxContainer/HighScoreLabel
 @onready var restart_button: Button = $CanvasLayer/UI/GameOverPanel/VBoxContainer/RestartButton
 
 
 func _ready() -> void:
+	high_score = LocalScore.get_high_score(GAME_ID)
 	basket.area_entered.connect(_on_basket_area_entered)
 	spawn_timer.timeout.connect(_on_spawn_timer_timeout)
 	restart_button.pressed.connect(_on_restart_pressed)
@@ -142,12 +148,17 @@ func _on_basket_area_entered(area: Area2D) -> void:
 
 func _update_score_label() -> void:
 	score_label.text = "Score: %d" % score
+	high_score_label.text = "High Score: %d" % maxi(high_score, score)
 
 
 func _trigger_game_over() -> void:
 	is_game_over = true
 	spawn_timer.stop()
+	var is_new_record := LocalScore.submit_score(GAME_ID, score)
+	high_score = maxi(high_score, score)
 	final_score_label.text = "Final Score: %d" % score
+	final_high_score_label.text = ("New High Score: %d" if is_new_record else "High Score: %d") % high_score
+	_update_score_label()
 	game_over_panel.visible = true
 
 

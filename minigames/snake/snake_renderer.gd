@@ -24,7 +24,7 @@ const CHERRY_DARK := Color(0.46, 0.03, 0.06)
 const TEXT_COLOR := Color(0.95, 0.95, 0.95)
 
 
-static func draw_game(canvas: CanvasItem, state: SnakeState, grid_width: int, grid_height: int, cell_size: int, ui_font: Font, ui_font_size: int) -> void:
+static func draw_game(canvas: CanvasItem, state: SnakeState, high_score: int, grid_width: int, grid_height: int, cell_size: int, ui_font: Font, ui_font_size: int) -> void:
 	# Das Spielfeld startet mit etwas Abstand, damit Wand und HUD sichtbar bleiben.
 	var playfield_origin := Vector2(cell_size, cell_size * 2)
 	var playfield_size := Vector2(grid_width * cell_size, grid_height * cell_size)
@@ -47,10 +47,8 @@ static func draw_game(canvas: CanvasItem, state: SnakeState, grid_width: int, gr
 		_draw_food(canvas, playfield_origin, state.food, cell_size, state.food_kind)
 
 	if ui_font != null:
-		var hud_text := "Punkte: %d   Tempo: %.2fx   Länge: %d" % [state.score, state.speed_multiplier, state.current_length()]
+		var hud_text := "SCORE: %d   HIGH SCORE: %d   SPEED: %.2fx   LENGTH: %d" % [state.score, maxi(high_score, state.score), state.speed_multiplier, state.current_length()]
 		canvas.draw_string(ui_font, Vector2(16, 24), hud_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, ui_font_size, TEXT_COLOR)
-		if not state.alive:
-			canvas.draw_string(ui_font, Vector2(16, 48), "Game Over - Enter zum Neustart", HORIZONTAL_ALIGNMENT_LEFT, -1.0, ui_font_size, TEXT_COLOR)
 
 
 static func _build_dragon_points(state: SnakeState, playfield_origin: Vector2, cell_size: int) -> Array[Vector2]:

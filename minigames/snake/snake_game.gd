@@ -1,6 +1,8 @@
 extends Node2D
 class_name SnakeGame
 
+const GAME_ID := "snake"
+
 # SnakeGame ist der einzige Node, der in eine Godot-Scene gehängt wird.
 # Er verbindet Eingabe, Spielzustand, Regeln und Rendering.
 
@@ -19,12 +21,22 @@ signal game_over(score: int)
 var state: SnakeState = SnakeState.new()
 var ui_font: Font
 var ui_font_size: int = 18
+var high_score: int = 0
+
+@onready var game_over_overlay: Control = $GameOverUI/GameOverOverlay
+@onready var final_score_value: Label = $GameOverUI/GameOverOverlay/Center/Panel/Margin/Content/ScoreRow/Value
+@onready var high_score_value: Label = $GameOverUI/GameOverOverlay/Center/Panel/Margin/Content/HighScoreRow/Value
+@onready var restart_button: Button = $GameOverUI/GameOverOverlay/Center/Panel/Margin/Content/RestartButton
+@onready var back_button: Button = $GameOverUI/GameOverOverlay/Center/Panel/Margin/Content/BackButton
 
 
 func _ready() -> void:
 	randomize()
+	high_score = LocalScore.get_high_score(GAME_ID)
 	ui_font = ThemeDB.fallback_font
 	ui_font_size = ThemeDB.fallback_font_size
+	restart_button.pressed.connect(restart_game)
+	back_button.pressed.connect(_back_to_main_menu)
 	start_game()
 
 
@@ -34,6 +46,7 @@ func start_game() -> void:
 	SnakeRules.spawn_food(state, grid_width, grid_height)
 	state.previous_snake = state.snake.duplicate()
 	state.render_alpha = 0.0
+	game_over_overlay.visible = false
 	score_changed.emit(state.score)
 	queue_redraw()
 
@@ -53,9 +66,10 @@ func get_score() -> int:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not state.alive:
-		get_tree().change_scene_to_file("res://minigames/flappy-bird/scenes/game_over.tscn")
-		#if event.is_action_pressed("ui_accept"):
-		restart_game()
+		if event.is_action_pressed("ui_accept"):
+			restart_game()
+		elif event.is_action_pressed("ui_cancel"):
+			_back_to_main_menu()
 		return
 
 	if event.is_action_pressed("ui_up"):
@@ -89,7 +103,10 @@ func _process(delta: float) -> void:
 		var ate_food := SnakeRules.step(state, grid_width, grid_height, max_snake_length)
 
 		if not state.alive:
+			LocalScore.submit_score(GAME_ID, state.score)
+			high_score = maxi(high_score, state.score)
 			game_over.emit(state.score)
+			_show_game_over()
 			break
 
 		if ate_food and state.score != previous_score:
@@ -102,4 +119,15 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	SnakeRenderer.draw_game(self, state, grid_width, grid_height, cell_size, ui_font, ui_font_size)
+	SnakeRenderer.draw_game(self, state, high_score, grid_width, grid_height, cell_size, ui_font, ui_font_size)
+
+
+func _show_game_over() -> void:
+	final_score_value.text = str(state.score)
+	high_score_value.text = str(high_score)
+	game_over_overlay.visible = true
+	restart_button.grab_focus()
+
+
+func _back_to_main_menu() -> void:
+	get_tree().change_scene_to_file("res://Scenes/02_game_selector.tscn")
