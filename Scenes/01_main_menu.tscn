@@ -1,58 +1,465 @@
-[gd_scene load_steps=3 format=3 uid="uid://b06cgti4i00gs"]
+[gd_scene load_steps=13 format=3 uid="uid://b06cgti4i00gs"]
 
-[ext_resource type="Script" uid="uid://dj22tg1prvilv" path="res://Scripts/01_main_menu.gd" id="1_28flt"]
+[ext_resource type="Script" uid="uid://dj22tg1prvilv" path="res://Scripts/01_main_menu.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/ui/main_menu_background_v2.png" id="2_background"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rhts7"]
-bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
-corner_radius_bottom_left = 16
-shadow_size = 15
+[sub_resource type="StyleBoxFlat" id="StylePanel"]
+bg_color = Color(0.025, 0.065, 0.14, 0.88)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.31, 0.66, 1, 0.46)
+corner_radius_top_left = 30
+corner_radius_top_right = 30
+corner_radius_bottom_right = 30
+corner_radius_bottom_left = 30
+shadow_color = Color(0, 0.02, 0.09, 0.62)
+shadow_size = 30
+shadow_offset = Vector2(0, 12)
+
+[sub_resource type="StyleBoxFlat" id="StyleLogo"]
+bg_color = Color(0.2, 0.53, 1, 0.92)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.61, 0.86, 1, 0.9)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0.08, 0.45, 1, 0.42)
+shadow_size = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleChip"]
+bg_color = Color(0.11, 0.23, 0.42, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.36, 0.68, 1, 0.32)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="StylePrimaryNormal"]
+bg_color = Color(0.18, 0.48, 1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.56, 0.82, 1, 0.9)
+corner_radius_top_left = 17
+corner_radius_top_right = 17
+corner_radius_bottom_right = 17
+corner_radius_bottom_left = 17
+shadow_color = Color(0.05, 0.33, 0.95, 0.48)
+shadow_size = 16
+shadow_offset = Vector2(0, 7)
+
+[sub_resource type="StyleBoxFlat" id="StylePrimaryHover"]
+bg_color = Color(0.28, 0.61, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76, 0.92, 1, 1)
+corner_radius_top_left = 17
+corner_radius_top_right = 17
+corner_radius_bottom_right = 17
+corner_radius_bottom_left = 17
+shadow_color = Color(0.12, 0.52, 1, 0.62)
+shadow_size = 21
+shadow_offset = Vector2(0, 7)
+
+[sub_resource type="StyleBoxFlat" id="StylePrimaryPressed"]
+bg_color = Color(0.11, 0.34, 0.8, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.49, 0.75, 1, 1)
+corner_radius_top_left = 17
+corner_radius_top_right = 17
+corner_radius_bottom_right = 17
+corner_radius_bottom_left = 17
+
+[sub_resource type="StyleBoxFlat" id="StylePrimaryFocus"]
+bg_color = Color(0.18, 0.48, 1, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.96, 0.78, 0.3, 1)
+corner_radius_top_left = 17
+corner_radius_top_right = 17
+corner_radius_bottom_right = 17
+corner_radius_bottom_left = 17
+
+[sub_resource type="StyleBoxFlat" id="StyleSecondaryNormal"]
+bg_color = Color(0.06, 0.13, 0.25, 0.86)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.43, 0.65, 0.88, 0.48)
+corner_radius_top_left = 17
+corner_radius_top_right = 17
+corner_radius_bottom_right = 17
+corner_radius_bottom_left = 17
+
+[sub_resource type="StyleBoxFlat" id="StyleSecondaryHover"]
+bg_color = Color(0.12, 0.24, 0.42, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.55, 0.8, 1, 0.82)
+corner_radius_top_left = 17
+corner_radius_top_right = 17
+corner_radius_bottom_right = 17
+corner_radius_bottom_left = 17
+
+[sub_resource type="StyleBoxFlat" id="StyleSecondaryPressed"]
+bg_color = Color(0.035, 0.09, 0.19, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.34, 0.58, 0.82, 0.8)
+corner_radius_top_left = 17
+corner_radius_top_right = 17
+corner_radius_bottom_right = 17
+corner_radius_bottom_left = 17
+
+[sub_resource type="StyleBoxFlat" id="StyleSecondaryFocus"]
+bg_color = Color(0.08, 0.17, 0.31, 0.94)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.96, 0.78, 0.3, 1)
+corner_radius_top_left = 17
+corner_radius_top_right = 17
+corner_radius_bottom_right = 17
+corner_radius_bottom_left = 17
+
+[sub_resource type="StyleBoxFlat" id="StyleStatus"]
+bg_color = Color(0.02, 0.08, 0.18, 0.72)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.39, 0.75, 1, 0.34)
+corner_radius_top_left = 15
+corner_radius_top_right = 15
+corner_radius_bottom_right = 15
+corner_radius_bottom_left = 15
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_28flt")
+script = ExtResource("1_script")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="Backdrop" type="TextureRect" parent="."]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -230.25
-offset_top = -155.25
-offset_right = 230.25
-offset_bottom = 155.25
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -24.0
+offset_top = -24.0
+offset_right = 24.0
+offset_bottom = 24.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 30
+mouse_filter = 2
+texture = ExtResource("2_background")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="BtnStart" type="Button" parent="VBoxContainer"]
+[node name="Atmosphere" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.008, 0.024, 0.075, 0.2)
+
+[node name="LeftShade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 0
+anchor_right = 0.62
+anchor_bottom = 1.0
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.008, 0.025, 0.075, 0.34)
+
+[node name="Header" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 56.0
+offset_top = 34.0
+offset_right = -56.0
+offset_bottom = 102.0
+grow_horizontal = 2
+
+[node name="Row" type="HBoxContainer" parent="Header"]
 layout_mode = 2
-size_flags_vertical = 3
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = SubResource("StyleBoxFlat_rhts7")
-text = "Start"
+theme_override_constants/separation = 15
 
-[node name="BtnExit" type="Button" parent="VBoxContainer"]
+[node name="Logo" type="PanelContainer" parent="Header/Row"]
+custom_minimum_size = Vector2(52, 52)
 layout_mode = 2
-size_flags_vertical = 3
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = SubResource("StyleBoxFlat_rhts7")
-text = "Exit"
+theme_override_styles/panel = SubResource("StyleLogo")
 
-[connection signal="pressed" from="VBoxContainer/BtnStart" to="." method="_on_btn_start_pressed"]
-[connection signal="pressed" from="VBoxContainer/BtnExit" to="." method="_on_btn_exit_pressed"]
+[node name="Letter" type="Label" parent="Header/Row/Logo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0.02, 0.08, 0.2, 0.55)
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 28
+text = "M"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Brand" type="VBoxContainer" parent="Header/Row"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Name" type="Label" parent="Header/Row/Brand"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.985, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "MINIGAME MASTER"
+
+[node name="Edition" type="Label" parent="Header/Row/Brand"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.52, 0.74, 0.98, 1)
+theme_override_font_sizes/font_size = 12
+text = "ARCADE COLLECTION"
+
+[node name="Spacer" type="Control" parent="Header/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Status" type="PanelContainer" parent="Header/Row"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleStatus")
+
+[node name="Text" type="Label" parent="Header/Row/Status"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "●  4 GAMES READY"
+vertical_alignment = 1
+
+[node name="MainArea" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 0
+anchor_right = 0.62
+anchor_bottom = 1.0
+offset_top = 82.0
+offset_bottom = -42.0
+grow_vertical = 2
+
+[node name="Center" type="CenterContainer" parent="MainArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MenuPanel" type="PanelContainer" parent="MainArea/Center"]
+custom_minimum_size = Vector2(650, 625)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StylePanel")
+
+[node name="Margin" type="MarginContainer" parent="MainArea/Center/MenuPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 38
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 38
+
+[node name="Content" type="VBoxContainer" parent="MainArea/Center/MenuPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Eyebrow" type="Label" parent="MainArea/Center/MenuPanel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.77, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "YOUR NEXT CHALLENGE AWAITS"
+
+[node name="Title" type="Label" parent="MainArea/Center/MenuPanel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0.11, 0.38, 0.88, 0.62)
+theme_override_constants/line_spacing = -10
+theme_override_constants/shadow_offset_y = 5
+theme_override_font_sizes/font_size = 66
+text = "PLAY. SCORE.\nREPEAT."
+
+[node name="Accent" type="ColorRect" parent="MainArea/Center/MenuPanel/Margin/Content"]
+custom_minimum_size = Vector2(84, 4)
+layout_mode = 2
+size_flags_horizontal = 0
+mouse_filter = 2
+color = Color(0.98, 0.66, 0.24, 1)
+
+[node name="Description" type="Label" parent="MainArea/Center/MenuPanel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.71, 0.81, 0.94, 1)
+theme_override_font_sizes/font_size = 17
+text = "Four worlds. Quick rounds. One more try.\nPick a game and chase your next high score."
+
+[node name="GapSmall" type="Control" parent="MainArea/Center/MenuPanel/Margin/Content"]
+custom_minimum_size = Vector2(0, 7)
+layout_mode = 2
+
+[node name="Chips" type="HBoxContainer" parent="MainArea/Center/MenuPanel/Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 9
+
+[node name="Fly" type="PanelContainer" parent="MainArea/Center/MenuPanel/Margin/Content/Chips"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleChip")
+
+[node name="Label" type="Label" parent="MainArea/Center/MenuPanel/Margin/Content/Chips/Fly"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.81, 0.91, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "FLY"
+
+[node name="Match" type="PanelContainer" parent="MainArea/Center/MenuPanel/Margin/Content/Chips"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleChip")
+
+[node name="Label" type="Label" parent="MainArea/Center/MenuPanel/Margin/Content/Chips/Match"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.81, 0.91, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "MATCH"
+
+[node name="Catch" type="PanelContainer" parent="MainArea/Center/MenuPanel/Margin/Content/Chips"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleChip")
+
+[node name="Label" type="Label" parent="MainArea/Center/MenuPanel/Margin/Content/Chips/Catch"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.81, 0.91, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "CATCH"
+
+[node name="Survive" type="PanelContainer" parent="MainArea/Center/MenuPanel/Margin/Content/Chips"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleChip")
+
+[node name="Label" type="Label" parent="MainArea/Center/MenuPanel/Margin/Content/Chips/Survive"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.81, 0.91, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "SURVIVE"
+
+[node name="Gap" type="Control" parent="MainArea/Center/MenuPanel/Margin/Content"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="BtnStart" type="Button" parent="MainArea/Center/MenuPanel/Margin/Content"]
+custom_minimum_size = Vector2(0, 66)
+layout_mode = 2
+focus_neighbor_bottom = NodePath("../BtnExit")
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(0.9, 0.96, 1, 1)
+theme_override_font_sizes/font_size = 21
+theme_override_styles/normal = SubResource("StylePrimaryNormal")
+theme_override_styles/hover = SubResource("StylePrimaryHover")
+theme_override_styles/pressed = SubResource("StylePrimaryPressed")
+theme_override_styles/focus = SubResource("StylePrimaryFocus")
+text = "PLAY NOW   →"
+
+[node name="BtnExit" type="Button" parent="MainArea/Center/MenuPanel/Margin/Content"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+focus_neighbor_top = NodePath("../BtnStart")
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.74, 0.84, 0.95, 1)
+theme_override_colors/font_hover_color = Color(0.94, 0.98, 1, 1)
+theme_override_colors/font_pressed_color = Color(0.65, 0.78, 0.92, 1)
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("StyleSecondaryNormal")
+theme_override_styles/hover = SubResource("StyleSecondaryHover")
+theme_override_styles/pressed = SubResource("StyleSecondaryPressed")
+theme_override_styles/focus = SubResource("StyleSecondaryFocus")
+text = "EXIT GAME"
+
+[node name="Hint" type="Label" parent="MainArea/Center/MenuPanel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.6, 0.78, 1)
+theme_override_font_sizes/font_size = 12
+text = "ENTER  Select      ↑ ↓  Navigate"
+horizontal_alignment = 1
+
+[node name="Footer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 58.0
+offset_top = -44.0
+offset_right = -58.0
+offset_bottom = -20.0
+grow_vertical = 0
+
+[node name="Row" type="HBoxContainer" parent="Footer"]
+layout_mode = 2
+
+[node name="Copy" type="Label" parent="Footer/Row"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.65, 0.83, 0.9)
+theme_override_font_sizes/font_size = 12
+text = "MINIGAME MASTER  ·  LOCAL ARCADE"
+
+[node name="Spacer" type="Control" parent="Footer/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Version" type="Label" parent="Footer/Row"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.65, 0.83, 0.9)
+theme_override_font_sizes/font_size = 12
+text = "BUILD 01"
+
+[node name="TransitionOverlay" type="ColorRect" parent="."]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.005, 0.015, 0.05, 1)
+
+[connection signal="pressed" from="MainArea/Center/MenuPanel/Margin/Content/BtnStart" to="." method="_on_btn_start_pressed"]
+[connection signal="pressed" from="MainArea/Center/MenuPanel/Margin/Content/BtnExit" to="." method="_on_btn_exit_pressed"]

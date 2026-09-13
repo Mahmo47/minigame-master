@@ -1,2 +1,4 @@
 res://minigames/flappy-bird/scenes/bird.gd
 res://minigames/flappy-bird/scenes/main.gd
+res://Scripts/01_main_menu.gd
+res://Scripts/02_game_selector.gd
