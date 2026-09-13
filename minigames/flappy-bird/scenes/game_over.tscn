@@ -1,0 +1,145 @@
+[gd_scene load_steps=8 format=3 uid="uid://cncr7rboyy6nw"]
+
+[ext_resource type="Script" uid="uid://gfj3658iltxn" path="res://minigames/flappy-bird/scenes/game_over.gd" id="1_wqhvx"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bqqt6"]
+bg_color = Color(0.18431373, 0.3647059, 0.62352943, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wu84c"]
+bg_color = Color(0.18431373, 0.3647059, 0.62352943, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8ln24"]
+bg_color = Color(0.18431373, 0.3647059, 0.62352943, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oa1go"]
+bg_color = Color(0.18431373, 0.3647059, 0.62352943, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rtw2f"]
+bg_color = Color(0.18431373, 0.3647059, 0.62352943, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tbmy8"]
+bg_color = Color(0.18431373, 0.3647059, 0.62352943, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[node name="GameOver" type="CanvasLayer"]
+script = ExtResource("1_wqhvx")
+
+[node name="ScorePanel" type="ColorRect" parent="."]
+anchors_preset = 10
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -155.0
+offset_top = 160.0
+offset_right = 155.0
+offset_bottom = 310.0
+grow_horizontal = 2
+color = Color(0.08, 0.12, 0.18, 0.88)
+
+[node name="ScoreTitle" type="Label" parent="ScorePanel"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 16.0
+offset_right = 200.0
+offset_bottom = 56.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 24
+text = "SCORE"
+
+[node name="ScoreValue" type="Label" parent="ScorePanel"]
+layout_mode = 0
+offset_left = 210.0
+offset_top = 16.0
+offset_right = 286.0
+offset_bottom = 56.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 24
+text = "0"
+horizontal_alignment = 2
+
+[node name="HighScoreTitle" type="Label" parent="ScorePanel"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 86.0
+offset_right = 200.0
+offset_bottom = 126.0
+theme_override_colors/font_color = Color(1, 0.82, 0.25, 1)
+theme_override_font_sizes/font_size = 24
+text = "HIGH SCORE"
+
+[node name="HighScoreValue" type="Label" parent="ScorePanel"]
+layout_mode = 0
+offset_left = 210.0
+offset_top = 86.0
+offset_right = 286.0
+offset_bottom = 126.0
+theme_override_colors/font_color = Color(1, 0.82, 0.25, 1)
+theme_override_font_sizes/font_size = 24
+text = "0"
+horizontal_alignment = 2
+
+[node name="Restart" type="Button" parent="."]
+anchors_preset = 10
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -80.0
+offset_top = 350.0
+offset_right = 80.0
+offset_bottom = 413.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_bqqt6")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_wu84c")
+theme_override_styles/hover = SubResource("StyleBoxFlat_8ln24")
+text = "Restart"
+
+[node name="BackToMain" type="Button" parent="."]
+anchors_preset = 10
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -80.0
+offset_top = 450.0
+offset_right = 80.0
+offset_bottom = 513.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_oa1go")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_rtw2f")
+theme_override_styles/hover = SubResource("StyleBoxFlat_tbmy8")
+text = "BACK TO 
+MAIN MENU"
+
+[connection signal="pressed" from="Restart" to="." method="_on_restart_pressed"]
+[connection signal="pressed" from="BackToMain" to="." method="_on_back_to_main_pressed"]

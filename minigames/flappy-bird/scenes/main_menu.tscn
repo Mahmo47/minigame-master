@@ -1,0 +1,101 @@
+[gd_scene load_steps=10 format=3 uid="uid://cu4c5qkpyvx5v"]
+
+[ext_resource type="Script" uid="uid://ddud3p3ldxj8q" path="res://minigames/flappy-bird/scenes/main_menu.gd" id="1_l6cm7"]
+[ext_resource type="Texture2D" uid="uid://de7amgi0rg06g" path="res://minigames/flappy-bird/assets/main_menu_bg.png" id="2_ekxnf"]
+[ext_resource type="Texture2D" uid="uid://c3odcjtyr3gfp" path="res://minigames/flappy-bird/assets/flappy_bird_title.png" id="4_wu84c"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xwolq"]
+bg_color = Color(0.18431373, 0.3647059, 0.62352943, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o7bka"]
+bg_color = Color(0.18431373, 0.3647059, 0.62352943, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_63vit"]
+bg_color = Color(0.18431373, 0.3647059, 0.62352943, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8ln24"]
+bg_color = Color(0.18431373, 0.3647059, 0.62352943, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wu84c"]
+bg_color = Color(0.18431373, 0.3647059, 0.62352943, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rtw2f"]
+bg_color = Color(0.18431373, 0.3647059, 0.62352943, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_l6cm7")
+
+[node name="Background_main_menu" type="Sprite2D" parent="."]
+texture = ExtResource("2_ekxnf")
+offset = Vector2(432, 465)
+
+[node name="NewGame" type="Button" parent="."]
+layout_mode = 0
+offset_left = 342.0
+offset_top = 350.0
+offset_right = 502.0
+offset_bottom = 413.0
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_xwolq")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_o7bka")
+theme_override_styles/hover = SubResource("StyleBoxFlat_63vit")
+text = "New Game"
+
+[node name="Leaderboard" type="Button" parent="."]
+layout_mode = 0
+offset_left = 342.0
+offset_top = 450.0
+offset_right = 502.0
+offset_bottom = 513.0
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_8ln24")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_wu84c")
+theme_override_styles/hover = SubResource("StyleBoxFlat_rtw2f")
+text = "Leaderboard"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(420, 200)
+texture = ExtResource("4_wu84c")
+
+[connection signal="pressed" from="NewGame" to="." method="_on_new_game_pressed"]
+[connection signal="pressed" from="Leaderboard" to="." method="_on_leaderboard_pressed"]
